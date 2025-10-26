@@ -1,103 +1,103 @@
-import { useCallback, useState } from 'react';
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceArea } from 'recharts';
+import { useCallback, useState } from "react"
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceArea, Legend } from "recharts"
 
-type Impressions = { name: number; cost: number; impression: number };
-
-// #region Sample data
-const impressionsData = [
-  { name: 1, cost: 4.11, impression: 100 },
-  { name: 2, cost: 2.39, impression: 120 },
-  { name: 3, cost: 1.37, impression: 150 },
-  { name: 4, cost: 1.16, impression: 180 },
-  { name: 5, cost: 2.29, impression: 200 },
-  { name: 6, cost: 3, impression: 499 },
-  { name: 7, cost: 0.53, impression: 50 },
-  { name: 8, cost: 2.52, impression: 100 },
-  { name: 9, cost: 1.79, impression: 200 },
-  { name: 10, cost: 2.94, impression: 222 },
-  { name: 11, cost: 4.3, impression: 210 },
-  { name: 12, cost: 4.41, impression: 300 },
-  { name: 13, cost: 2.1, impression: 50 },
-  { name: 14, cost: 8, impression: 190 },
-  { name: 15, cost: 0, impression: 300 },
-  { name: 16, cost: 9, impression: 400 },
-  { name: 17, cost: 3, impression: 200 },
-  { name: 18, cost: 2, impression: 50 },
-  { name: 19, cost: 3, impression: 100 },
-  { name: 20, cost: 7, impression: 100 },
-];
-
-// #endregion
 type ZoomAndHighlightState = {
-  left: string | number;
-  right: string | number;
-  refAreaLeft: string | number | undefined;
-  refAreaRight: string | number | undefined;
-  top: string | number;
-  bottom: string | number;
-  top2: string | number;
-  bottom2: string | number;
-  animation: boolean;
-};
+  left: string | number
+  right: string | number
+  refAreaLeft: string | number | undefined
+  refAreaRight: string | number | undefined
+  top: string | number
+  bottom: string | number
+  animation: boolean
+}
 
 const initialState: ZoomAndHighlightState = {
-  left: 'dataMin',
-  right: 'dataMax',
+  left: "dataMin",
+  right: "dataMax",
   refAreaLeft: undefined,
   refAreaRight: undefined,
-  top: 'dataMax+1',
-  bottom: 'dataMin-1',
-  top2: 'dataMax+20',
-  bottom2: 'dataMin-20',
+  top: "dataMax+1",
+  bottom: "dataMin-1",
   animation: true,
-};
+}
 
+// calcula dominio Y usando múltiples keys (refs)
 const getAxisYDomain = (
-  data: Impressions[],
-  from: string | number | undefined,
-  to: string | number | undefined,
-  ref: keyof Impressions,
+  data: Record<string, any>[],
+  fromLabel: string | number | undefined,
+  toLabel: string | number | undefined,
+  refs: string[],
   offset: number,
+  xKey: string,
 ): (number | string)[] => {
-  if (from != null && to != null) {
-    const refData = data.slice(Number(from) - 1, Number(to));
-    let [bottom, top] = [refData[0][ref], refData[0][ref]];
-    refData.forEach(d => {
-      if (d[ref] > top) top = d[ref];
-      if (d[ref] < bottom) bottom = d[ref];
-    });
+  if (fromLabel != null && toLabel != null) {
+    const start = data.findIndex((d) => String(d[xKey]) === String(fromLabel))
+    const end = data.findIndex((d) => String(d[xKey]) === String(toLabel))
+    if (start === -1 || end === -1) return [initialState.bottom, initialState.top]
+    const sliceStart = Math.min(start, end)
+    const sliceEnd = Math.max(start, end) + 1
+    const refData = data.slice(sliceStart, sliceEnd)
 
-    return [(bottom | 0) - offset, (top | 0) + offset];
+    let bottom = Infinity
+    let top = -Infinity
+
+    refData.forEach((d) => {
+      refs.forEach((ref) => {
+        const v = Number(d[ref]) || 0
+        if (v > top) top = v
+        if (v < bottom) bottom = v
+      })
+    })
+
+    if (!isFinite(bottom) || !isFinite(top)) return [initialState.bottom, initialState.top]
+
+    return [Math.floor(bottom) - offset, Math.ceil(top) + offset]
   }
-  return [initialState.bottom, initialState.top];
-};
+  return [initialState.bottom, initialState.top]
+}
 
 type Props = {
-  data?: Impressions[];
-  showZoomOut?: boolean;
-  maxWidth?: string | number;
-};
+  data?: Record<string, any>[]
+  keys?: string[]
+  xKey?: string
+  showZoomOut?: boolean
+  maxWidth?: string | number
+}
 
-const HighlightAndZoomLineChart = ({ data = impressionsData, showZoomOut = true, maxWidth = '700px' }: Props) => {
-  const [zoomGraph, setZoomGraph] = useState<ZoomAndHighlightState>(initialState);
+const defaultSample = [
+  { date: "1", A: 4, B: 100 },
+  { date: "2", A: 2, B: 120 },
+  { date: "3", A: 1, B: 150 },
+]
+
+const colors = ["#8884d8", "#82ca9d", "#ff7300", "#413ea0", "#00C49F", "#FFBB28", "#FF8042", "#0088FE", "#A28FD0", "#E67E22"]
+
+const HighlightAndZoomLineChart = ({
+  data = defaultSample,
+  keys = ["A", "B"],
+  xKey = "date",
+  showZoomOut = true,
+  maxWidth = "700px",
+}: Props) => {
+  const [zoomGraph, setZoomGraph] = useState<ZoomAndHighlightState>(initialState)
 
   const zoom = useCallback(() => {
-    setZoomGraph((prev: ZoomAndHighlightState): ZoomAndHighlightState => {
-      let { refAreaLeft, refAreaRight } = prev;
+    setZoomGraph((prev) => {
+      let { refAreaLeft, refAreaRight } = prev
 
-      if (refAreaLeft === refAreaRight || refAreaRight === '') {
+      if (refAreaLeft === refAreaRight || refAreaRight === "") {
         return {
           ...prev,
           refAreaLeft: undefined,
           refAreaRight: undefined,
-        };
+        }
       }
 
-      if (refAreaLeft && refAreaRight && refAreaLeft > refAreaRight)
-        [refAreaLeft, refAreaRight] = [refAreaRight, refAreaLeft];
+      if (refAreaLeft && refAreaRight && String(refAreaLeft) > String(refAreaRight))
+        ;[refAreaLeft, refAreaRight] = [refAreaRight, refAreaLeft]
 
-      const [bottom, top] = getAxisYDomain(data, refAreaLeft, refAreaRight, 'cost', 1);
-      const [bottom2, top2] = getAxisYDomain(data, refAreaLeft, refAreaRight, 'impression', 50);
+      // calcular dominio Y usando todas las keys en la gráfica (todas al eje izquierdo)
+      const [bottom, top] = getAxisYDomain(data, refAreaLeft, refAreaRight, keys, 1, xKey)
 
       return {
         ...prev,
@@ -107,39 +107,33 @@ const HighlightAndZoomLineChart = ({ data = impressionsData, showZoomOut = true,
         right: refAreaRight ?? initialState.right,
         bottom,
         top,
-        bottom2,
-        top2,
-      };
-    });
-  }, [setZoomGraph, data]);
+      }
+    })
+  }, [data, keys, xKey])
 
   const zoomOut = useCallback(() => {
-    setZoomGraph(initialState);
-  }, [setZoomGraph]);
+    setZoomGraph(initialState)
+  }, [])
 
-  const onMouseDown = useCallback(
-    (e: MouseHandlerDataParam) => {
-      setZoomGraph((prev: ZoomAndHighlightState): ZoomAndHighlightState => ({ ...prev, refAreaLeft: e.activeLabel }));
-    },
-    [setZoomGraph],
-  );
+  const onMouseDown = useCallback((e: any) => {
+    if (!e) return
+    setZoomGraph((prev) => ({ ...prev, refAreaLeft: e.activeLabel }))
+  }, [])
 
-  const onMouseMove = useCallback(
-    (e: MouseHandlerDataParam) => {
-      setZoomGraph(prev => {
-        if (prev.refAreaLeft) {
-          return { ...prev, refAreaRight: e.activeLabel };
-        }
-        return prev;
-      });
-    },
-    [setZoomGraph],
-  );
+  const onMouseMove = useCallback((e: any) => {
+    if (!e) return
+    setZoomGraph((prev) => {
+      if (prev.refAreaLeft) {
+        return { ...prev, refAreaRight: e.activeLabel }
+      }
+      return prev
+    })
+  }, [])
 
-  const { refAreaLeft, refAreaRight, left, right, top, bottom, top2, bottom2 } = zoomGraph;
+  const { refAreaLeft, refAreaRight, left, right, top, bottom } = zoomGraph
 
   return (
-    <div className="highlight-bar-charts" style={{ userSelect: 'none', width: '100%' }}>
+    <div className="highlight-bar-charts" style={{ userSelect: "none", width: "100%" }}>
       {showZoomOut ? (
         <button type="button" className="btn update" onClick={zoomOut}>
           Zoom Out
@@ -147,27 +141,37 @@ const HighlightAndZoomLineChart = ({ data = impressionsData, showZoomOut = true,
       ) : null}
 
       <LineChart
-        style={{ width: '100%', maxWidth, maxHeight: '70vh', aspectRatio: 1.618 }}
-        responsive
+        style={{ width: "100%", maxWidth, maxHeight: "70vh", aspectRatio: 1.618 }}
         data={data}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={zoom}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis allowDataOverflow dataKey="name" domain={[left, right]} type="number" />
-        <YAxis allowDataOverflow domain={[bottom, top]} type="number" yAxisId="1" width="auto" />
-        <YAxis orientation="right" allowDataOverflow domain={[bottom2, top2]} type="number" yAxisId="2" width="auto" />
+        <XAxis dataKey={xKey} type="category" />
+        <YAxis allowDataOverflow domain={[bottom, top]} type="number" width={60} />
         <Tooltip />
-        <Line yAxisId="1" type="natural" dataKey="cost" stroke="#8884d8" animationDuration={300} />
-        <Line yAxisId="2" type="natural" dataKey="impression" stroke="#82ca9d" animationDuration={300} />
+        <Legend verticalAlign="top" />
+
+        {keys.map((k, idx) => (
+          <Line
+            key={k}
+            type="natural"
+            dataKey={k}
+            name={k}
+            stroke={colors[idx % colors.length]}
+            animationDuration={300}
+            dot={false}
+            isAnimationActive={false}
+          />
+        ))}
 
         {refAreaLeft && refAreaRight ? (
-          <ReferenceArea yAxisId="1" x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} />
+          <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} />
         ) : null}
       </LineChart>
     </div>
-  );
-};
+  )
+}
 
-export default HighlightAndZoomLineChart;
+export default HighlightAndZoomLineChart
