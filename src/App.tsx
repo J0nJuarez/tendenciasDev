@@ -8,12 +8,13 @@ import Formulariosugerencia from "./components/form"
 import FiltroCategoria from "./components/filtro"
 import { useJobData } from "./hooks/useJobData"
 import { useMemo, useState } from "react"
+import Loader from "./components/cargando"
 
 type TechData = { tecnologia: string; ofertas: number | string }
 
 function App() {
   const { data, isLoading, error } = useJobData()
-  const [category, setCategory] = useState<"frontend" | "backend" | "lenguajes" | "ecosistema">("frontend")
+  const [category, setCategory] = useState<"Todos" | "frontend" | "backend" | "lenguajes" | "ecosistema">("Todos")
 
   const top10Data = useMemo(() => {
     if (!data) return []
@@ -44,7 +45,7 @@ function App() {
     }))
   }, [data, category])
 
-  if (isLoading) return <p className="text-center mt-10">Cargando datos...</p>
+  if (isLoading) return <Loader />
   if (error) return <p className="text-center mt-10 text-red-600">{error}</p>
   if (!data) return null
 
@@ -55,10 +56,10 @@ function App() {
       <FiltroCategoria
         category={category}
         onChange={(c) => setCategory(c as any)}
-        options={["frontend", "backend", "lenguajes", "ecosistema"]}
+        options={["Todos","frontend", "backend", "lenguajes", "ecosistema"]}
       />
-
-      <div className="grid grid-cols-3 grid-rows-4 gap-4 p-6">
+      <p className="mt-5">Información de los últimos 28 días</p>
+      <div className="flex flex-col md:grid md:grid-cols-3 md:grid-rows-4 gap-4 py-3">        
         <div className="col-span-2 row-span-2">
           <Card className="w-full h-full">
             <CardHeader>

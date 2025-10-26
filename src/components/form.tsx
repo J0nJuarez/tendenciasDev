@@ -159,7 +159,7 @@ export function Formulariosugerencia({
       </CardContent>
       <CardFooter>
         <Field orientation="horizontal">
-          <Button type="submit" form="form-rhf-demo">
+          <Button type="submit" variant={"outline"} form="form-rhf-demo">
             {submitLabel}
           </Button>
         </Field>
