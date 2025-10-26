@@ -39,9 +39,25 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+/* Header theme */
+  --header-text: var(--color-limed-spruce-50);
+  --header-bg: var(--color-limed-spruce-500);
 }
 
 :root {
+  --color-limed-spruce: oklch(38.463% 0.01881 223.13);
+  --color-limed-spruce-50:  oklch(74.056% 0.02057 225.82);
+  --color-limed-spruce-100: oklch(70.615% 0.02371 221.94);
+  --color-limed-spruce-200: oklch(63.106% 0.03053 222.55);
+  --color-limed-spruce-300: oklch(55.448% 0.02864 221.92);
+  --color-limed-spruce-400: oklch(47.026% 0.02373 224.74);
+  --color-limed-spruce-500: oklch(38.463% 0.01881 223.13);
+  --color-limed-spruce-600: oklch(33.349% 0.01608 229.49);
+  --color-limed-spruce-700: oklch(28.263% 0.01249 222.49);
+  --color-limed-spruce-800: oklch(22.691% 0.00947 234.19);
+  --color-limed-spruce-900: oklch(17.015% 0.00526 219.78);
+  --color-limed-spruce-950: oklch(13.76% 0.0045 226.66);
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
