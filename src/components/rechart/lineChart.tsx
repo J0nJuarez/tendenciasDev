@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceArea, MouseHandlerDataParam } from 'recharts';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceArea } from 'recharts';
 
 type Impressions = { name: number; cost: number; impression: number };
 
@@ -53,13 +53,14 @@ const initialState: ZoomAndHighlightState = {
 };
 
 const getAxisYDomain = (
+  data: Impressions[],
   from: string | number | undefined,
   to: string | number | undefined,
   ref: keyof Impressions,
   offset: number,
 ): (number | string)[] => {
   if (from != null && to != null) {
-    const refData = impressionsData.slice(Number(from) - 1, Number(to));
+    const refData = data.slice(Number(from) - 1, Number(to));
     let [bottom, top] = [refData[0][ref], refData[0][ref]];
     refData.forEach(d => {
       if (d[ref] > top) top = d[ref];
@@ -71,7 +72,13 @@ const getAxisYDomain = (
   return [initialState.bottom, initialState.top];
 };
 
-const HighlightAndZoomLineChart = () => {
+type Props = {
+  data?: Impressions[];
+  showZoomOut?: boolean;
+  maxWidth?: string | number;
+};
+
+const HighlightAndZoomLineChart = ({ data = impressionsData, showZoomOut = true, maxWidth = '700px' }: Props) => {
   const [zoomGraph, setZoomGraph] = useState<ZoomAndHighlightState>(initialState);
 
   const zoom = useCallback(() => {
@@ -89,8 +96,8 @@ const HighlightAndZoomLineChart = () => {
       if (refAreaLeft && refAreaRight && refAreaLeft > refAreaRight)
         [refAreaLeft, refAreaRight] = [refAreaRight, refAreaLeft];
 
-      const [bottom, top] = getAxisYDomain(refAreaLeft, refAreaRight, 'cost', 1);
-      const [bottom2, top2] = getAxisYDomain(refAreaLeft, refAreaRight, 'impression', 50);
+      const [bottom, top] = getAxisYDomain(data, refAreaLeft, refAreaRight, 'cost', 1);
+      const [bottom2, top2] = getAxisYDomain(data, refAreaLeft, refAreaRight, 'impression', 50);
 
       return {
         ...prev,
@@ -104,7 +111,7 @@ const HighlightAndZoomLineChart = () => {
         top2,
       };
     });
-  }, [setZoomGraph]);
+  }, [setZoomGraph, data]);
 
   const zoomOut = useCallback(() => {
     setZoomGraph(initialState);
@@ -133,14 +140,16 @@ const HighlightAndZoomLineChart = () => {
 
   return (
     <div className="highlight-bar-charts" style={{ userSelect: 'none', width: '100%' }}>
-      <button type="button" className="btn update" onClick={zoomOut}>
-        Zoom Out
-      </button>
+      {showZoomOut ? (
+        <button type="button" className="btn update" onClick={zoomOut}>
+          Zoom Out
+        </button>
+      ) : null}
 
       <LineChart
-        style={{ width: '100%', maxWidth: '700px', maxHeight: '70vh', aspectRatio: 1.618 }}
+        style={{ width: '100%', maxWidth, maxHeight: '70vh', aspectRatio: 1.618 }}
         responsive
-        data={impressionsData}
+        data={data}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={zoom}
