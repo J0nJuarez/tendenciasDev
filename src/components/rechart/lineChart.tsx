@@ -21,9 +21,8 @@ const initialState: ZoomAndHighlightState = {
   animation: true,
 }
 
-// calcula dominio Y usando múltiples keys (refs)
 const getAxisYDomain = (
-  data: Record<string, any>[],
+  data: Record<string, string | number>[],
   fromLabel: string | number | undefined,
   toLabel: string | number | undefined,
   refs: string[],
@@ -57,17 +56,16 @@ const getAxisYDomain = (
 }
 
 type Props = {
-  data?: Record<string, any>[]
+  data?: Record<string, string | number>[]
   keys?: string[]
   xKey?: string
-  showZoomOut?: boolean
   maxWidth?: string | number
 }
 
 const defaultSample = [
-  { date: "1", A: 4, B: 100 },
-  { date: "2", A: 2, B: 120 },
-  { date: "3", A: 1, B: 150 },
+  { date: "1" as string, A: 4 as number },
+  { date: "2" as string, A: 2 as number },
+  { date: "3" as string, A: 1 as number },
 ]
 
 const colors = ["#8884d8", "#82ca9d", "#ff7300", "#413ea0", "#00C49F", "#FFBB28", "#FF8042", "#0088FE", "#A28FD0", "#E67E22"]
@@ -76,82 +74,50 @@ const HighlightAndZoomLineChart = ({
   data = defaultSample,
   keys = ["A", "B"],
   xKey = "date",
-  showZoomOut = true,
   maxWidth = "700px",
 }: Props) => {
   const [zoomGraph, setZoomGraph] = useState<ZoomAndHighlightState>(initialState)
 
   const zoom = useCallback(() => {
-    setZoomGraph((prev) => {
-      let { refAreaLeft, refAreaRight } = prev
+    setZoomGraph((prev): ZoomAndHighlightState => {
+      const { refAreaLeft, refAreaRight } = prev
 
-      if (refAreaLeft === refAreaRight || refAreaRight === "") {
-        return {
-          ...prev,
-          refAreaLeft: undefined,
-          refAreaRight: undefined,
-        }
-      }
+      if (refAreaLeft == null || refAreaRight == null) return prev
 
-      if (refAreaLeft && refAreaRight && String(refAreaLeft) > String(refAreaRight))
-        ;[refAreaLeft, refAreaRight] = [refAreaRight, refAreaLeft]
-
-      // calcular dominio Y usando todas las keys en la gráfica (todas al eje izquierdo)
       const [bottom, top] = getAxisYDomain(data, refAreaLeft, refAreaRight, keys, 1, xKey)
 
       return {
         ...prev,
         refAreaLeft: undefined,
         refAreaRight: undefined,
-        left: refAreaLeft ?? initialState.left,
-        right: refAreaRight ?? initialState.right,
+        left: refAreaLeft,
+        right: refAreaRight,
         bottom,
         top,
       }
     })
   }, [data, keys, xKey])
 
-  const zoomOut = useCallback(() => {
-    setZoomGraph(initialState)
-  }, [])
+  
 
-  const onMouseDown = useCallback((e: any) => {
-    if (!e) return
-    setZoomGraph((prev) => ({ ...prev, refAreaLeft: e.activeLabel }))
-  }, [])
 
-  const onMouseMove = useCallback((e: any) => {
-    if (!e) return
-    setZoomGraph((prev) => {
-      if (prev.refAreaLeft) {
-        return { ...prev, refAreaRight: e.activeLabel }
-      }
-      return prev
-    })
-  }, [])
 
-  const { refAreaLeft, refAreaRight, left, right, top, bottom } = zoomGraph
+  const { refAreaLeft, refAreaRight, top, bottom } = zoomGraph
 
   return (
-    <div className="highlight-bar-charts" style={{ userSelect: "none", width: "100%" }}>
-      {showZoomOut ? (
-        <button type="button" className="btn update" onClick={zoomOut}>
-          Zoom Out
-        </button>
-      ) : null}
+    <div className="highlight-bar-charts w-full" >
+
 
       <LineChart
         style={{ width: "100%", maxWidth, maxHeight: "70vh", aspectRatio: 1.618 }}
         data={data}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
         onMouseUp={zoom}
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey={xKey} type="category" />
         <YAxis allowDataOverflow domain={[bottom, top]} type="number" width={60} />
         <Tooltip />
-        <Legend verticalAlign="top" />
+        <Legend verticalAlign="bottom" />
 
         {keys.map((k, idx) => (
           <Line
