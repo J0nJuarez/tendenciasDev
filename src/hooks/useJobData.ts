@@ -25,8 +25,8 @@ export function useJobData(url = "https://script.googleusercontent.com/macros/ec
         if (!res.ok) throw new Error("Error al cargar los datos del mercado")
         const json: MarketData = await res.json()
         setData(json)
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: string | null | unknown) {
+        setError((err as Error).message)
       } finally {
         setIsLoading(false)
       }
