@@ -109,7 +109,7 @@ const HighlightAndZoomLineChart = ({
 
 
       <LineChart
-        style={{ width: "100%", maxWidth, maxHeight: "70vh", aspectRatio: 1.618 }}
+        style={{ width: "100%", maxHeight: "70vh", aspectRatio: 1.618 }}
         data={data}
         onMouseUp={zoom}
       >
@@ -117,7 +117,14 @@ const HighlightAndZoomLineChart = ({
         <XAxis dataKey={xKey} type="category" />
         <YAxis allowDataOverflow domain={[bottom, top]} type="number" width={60} />
         <Tooltip />
-        <Legend verticalAlign="bottom" />
+
+        <Legend 
+          verticalAlign="bottom" 
+          align="left" 
+          layout="horizontal" 
+          wrapperStyle={{ width: '100%' }} 
+          className="text-left"
+        />
 
         {keys.map((k, idx) => (
           <Line
