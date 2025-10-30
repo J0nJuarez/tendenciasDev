@@ -121,8 +121,7 @@ const HighlightAndZoomLineChart = ({
           verticalAlign="top" 
           align="left" 
           layout="horizontal" 
-          wrapperStyle={{ width: '100%' }} 
-          className="text-left"
+          wrapperStyle={{ width: '100%', position: 'relative'}} 
         />
 
         {keys.map((k, idx) => (
