@@ -74,7 +74,6 @@ const HighlightAndZoomLineChart = ({
   data = defaultSample,
   keys = ["A", "B"],
   xKey = "date",
-  maxWidth = "700px",
 }: Props) => {
   const [zoomGraph, setZoomGraph] = useState<ZoomAndHighlightState>(initialState)
 
@@ -114,7 +113,7 @@ const HighlightAndZoomLineChart = ({
         onMouseUp={zoom}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey={xKey} type="category" />
+        <XAxis dataKey={xKey} type="category" tick={false} axisLine={false} />
         <YAxis allowDataOverflow domain={[bottom, top]} type="number" width={60} />
         <Tooltip />
 
@@ -135,7 +134,7 @@ const HighlightAndZoomLineChart = ({
             stroke={colors[idx % colors.length]}
             animationDuration={300}
             dot={false}
-            isAnimationActive={false}
+            isAnimationActive={true}
           />
         ))}
 
