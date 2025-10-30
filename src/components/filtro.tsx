@@ -9,13 +9,13 @@ export type Props = {
 
 export function FiltroCategoria({ category, onChange, options }: Props) {
   return (
-      <ButtonGroup className="mx-auto my-4 flex-col sm:flex-row flex-wrap justify-center gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
+      <ButtonGroup className="mx-auto my-4 flex-row flex-nowrap justify-center">
         {options.map((opt) => (
             <Button
             key={opt}
             variant={category === opt ? "default" : "outline"}
             onClick={() => onChange(opt)}
-            className="capitalize"
+            className="capitalize text-xs p-0.5 sm:px-5 sm:text-base"
             >
             {opt}
             </Button>

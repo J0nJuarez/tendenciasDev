@@ -119,7 +119,7 @@ const HighlightAndZoomLineChart = ({
         <Tooltip />
 
         <Legend 
-          verticalAlign="bottom" 
+          verticalAlign="top" 
           align="left" 
           layout="horizontal" 
           wrapperStyle={{ width: '100%' }} 
