@@ -14,9 +14,14 @@ type TechData = { tecnologia: string; ofertas: number | string }
 
 const CATEGORIES = ["frontend", "backend", "lenguajes", "ecosistema"] as const
 
+type Category = (typeof CATEGORIES)[number] | "Todos"
+
 function App() {
   const { data, isLoading, error } = useJobData()
-  const [category, setCategory] = useState<"Todos" | "frontend" | "backend" | "lenguajes" | "ecosistema">("Todos")
+  const [category, setCategory] = useState<Category>("Todos")
+
+  
+ 
 
   const top7Data = useMemo(() => {
     if (!data) return []
@@ -24,10 +29,8 @@ function App() {
     const dates = Object.keys(data)
     if (dates.length === 0) return []
 
-    // Si la categoría es "Todos", agregamos las ofertas de todas las categorías por tecnología y por fecha
     const activeCategories = category === "Todos" ? CATEGORIES : [category]
 
-    // Recolectar todos los nombres de tecnologías encontradas en las categorías activas
     const techSet = new Set<string>()
     dates.forEach((date) => {
       activeCategories.forEach((cat) => {
@@ -38,7 +41,6 @@ function App() {
     const techNames = Array.from(techSet)
 
     const averages = techNames.map((tech) => {
-      // Para cada fecha sumamos las ofertas de las categorías activas para esa tecnología
       const values = dates.map((date) => {
         const sumForDate = activeCategories.reduce((acc, cat) => {
           const techEntry = data[date]?.[cat]?.find((t: TechData) => t.tecnologia === tech)
@@ -57,13 +59,13 @@ function App() {
 
     return top7.map((t, i) => ({
       name: i + 1,
-      cost: Number(t.ofertas) || 0, // asegurar número
+      cost: Number(t.ofertas) || 0, 
       impression: Number(t.ofertas) || 0,
       label: t.tecnologia,
     }))
   }, [data, category])
 
-  // Datos para el line chart: serie temporal por fecha con una clave por tecnología (las top 10)
+  
   const lineChartData = useMemo(() => {
     if (!data) return []
     const dates = Object.keys(data).sort()
@@ -95,7 +97,7 @@ function App() {
 
       <FiltroCategoria
         category={category}
-        onChange={(c) => setCategory(c as any)}
+        onChange={(c: Category) => setCategory(c)}
         options={["Todos","frontend", "backend", "lenguajes", "ecosistema"]}
       />
       <p className="mt-5">Información de los últimos 28 días</p>
@@ -113,8 +115,6 @@ function App() {
                 data={lineChartData}
                 keys={top7Data.map((d) => d.label)}
                 xKey="date"
-                showZoomOut
-                maxWidth="100%"
               />
             </CardContent>
           </Card>
@@ -123,19 +123,18 @@ function App() {
         <div className="row-span-2 col-start-1 row-start-3">
           <Card className="w-full h-full">
             <CardHeader>
-              <CardTitle>Distribución (%)</CardTitle>
+              <CardTitle>Porcentaje de ofertas</CardTitle>
               <CardDescription>
-                Participación de cada tecnología en el top 10
+                Participación de cada tecnología en el top 7
               </CardDescription>
             </CardHeader>
             <CardContent>
               <PieChartWithPaddingAngle
-                data={top7Data.map((d, i) => ({
+                data={top7Data.map((d) => ({
                   name: d.label,
                   value: Number(d.cost) || 0,
-                  fill: `hsl(var(--chart-${(i % 5) + 1}))`, // colores del tema
-                }))}
-                isAnimationActive={false}
+                                }))}
+                isAnimationActive={true}
                 maxWidth="400px"
                 innerRadius="60%"
                 outerRadius="90%"
@@ -184,13 +183,15 @@ function App() {
         <div className="row-span-2 col-start-3 row-start-1">
           <Card className="w-full h-full">
             <CardHeader>
-              <CardTitle>Resumen</CardTitle>
+              <CardTitle>LinekedIn Scrapper</CardTitle>
               <CardDescription>
-                Datos medios calculados a partir de todas las fechas del JSON
+                Datos medios calculados a partir de los ultimos 28 dias pero tengo mas dias guardados por si los necesitas ponte en contacto.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p>Las tecnologías se muestran ordenadas por volumen medio de ofertas.</p>
+              <p>Este proyecto analiza miles de ofertas de trabajo en LinkedIn para ver qué tecnologías están de moda. Recopila y procesa las descripciones de empleo para detectar qué lenguajes y herramientas están más demandados por las empresas.
+                    <br />
+              Al final, muestra las tecnologías que están en auge, ayudando a identificar las habilidades más relevantes para mantenerse actualizado y seguir las tendencias del mercado.</p>
             </CardContent>
           </Card>
         </div>
