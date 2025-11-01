@@ -35,11 +35,7 @@ export function PieChartWithPaddingAngle({
   const fills = (data || []).map((entry, i) => entry.fill ?? colors[i % colors.length])
 
   // payload explícito para que la leyenda muestre los mismos colores
-  const legendPayload = (data || []).map((entry, i) => ({
-    value: entry.name,
-    type: 'square' as const,
-    color: fills[i],
-  }))
+  
 
   return (
     <div style={{ width: '100%', maxWidth, maxHeight: '80vh' }}>
@@ -58,12 +54,12 @@ export function PieChartWithPaddingAngle({
             {(data || []).map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={fills[index]}
+                fill={fills[entry.name ? index : 0]}
               />
             ))}
           </Pie>
           <Tooltip />
-          <Legend payload={legendPayload} />
+          <Legend/>
         </PieChart>
       </ResponsiveContainer>
     </div>

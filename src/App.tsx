@@ -16,25 +16,38 @@ const CATEGORIES = ["frontend", "backend", "lenguajes", "ecosistema"] as const
 
 type Category = (typeof CATEGORIES)[number] | "Todos"
 
+// Tipado para la estructura de datos que devuelve el hook
+type JobData = Record<string, Partial<Record<(typeof CATEGORIES)[number], TechData[]>>>
+
+type TopEntry = {
+  name: number
+  cost: number
+  impression: number
+  label: string
+}
+
 function App() {
-  const { data, isLoading, error } = useJobData()
+  // Anotamos la forma esperada del hook para evitar errores de indexación
+  const { data, isLoading, error } = useJobData() as {
+    data?: JobData
+    isLoading: boolean
+    error?: string | null
+  }
   const [category, setCategory] = useState<Category>("Todos")
 
-  
- 
-
-  const top7Data = useMemo(() => {
+  const top7Data = useMemo<TopEntry[]>(() => {
     if (!data) return []
 
     const dates = Object.keys(data)
     if (dates.length === 0) return []
 
-    const activeCategories = category === "Todos" ? CATEGORIES : [category]
+    const activeCategories = category === "Todos" ? Array.from(CATEGORIES) : [category as (typeof CATEGORIES)[number]]
 
     const techSet = new Set<string>()
     dates.forEach((date) => {
       activeCategories.forEach((cat) => {
-        const arr: TechData[] = (data[date] && data[date][cat]) || []
+        // asegurar el tipo al leer el mapa
+        const arr = (data[date]?.[cat] ?? []) as TechData[]
         arr.forEach((t) => techSet.add(t.tecnologia))
       })
     })
@@ -43,13 +56,13 @@ function App() {
     const averages = techNames.map((tech) => {
       const values = dates.map((date) => {
         const sumForDate = activeCategories.reduce((acc, cat) => {
-          const techEntry = data[date]?.[cat]?.find((t: TechData) => t.tecnologia === tech)
+          const techEntry = (data[date]?.[cat] ?? []).find((t: TechData) => t.tecnologia === tech)
           return acc + Number(techEntry?.ofertas ?? 0)
         }, 0)
         return sumForDate
       })
 
-      const avg = values.reduce((a, b) => a + b, 0) / values.length
+      const avg = values.reduce((a, b) => a + b, 0) / (values.length || 1)
       return { tecnologia: tech, ofertas: avg }
     })
 
@@ -59,26 +72,25 @@ function App() {
 
     return top7.map((t, i) => ({
       name: i + 1,
-      cost: Number(t.ofertas) || 0, 
+      cost: Number(t.ofertas) || 0,
       impression: Number(t.ofertas) || 0,
       label: t.tecnologia,
     }))
   }, [data, category])
 
-  
-  const lineChartData = useMemo(() => {
+  const lineChartData = useMemo<Record<string, number | string>[]>(() => {
     if (!data) return []
     const dates = Object.keys(data).sort()
     if (dates.length === 0 || top7Data.length === 0) return []
 
-    const activeCategories = category === "Todos" ? CATEGORIES : [category]
+    const activeCategories = category === "Todos" ? Array.from(CATEGORIES) : [category as (typeof CATEGORIES)[number]]
     const topLabels = top7Data.map((t) => t.label)
 
     return dates.map((date) => {
       const row: Record<string, number | string> = { date }
       topLabels.forEach((label) => {
         const value = activeCategories.reduce((acc, cat) => {
-          const entry = data[date]?.[cat]?.find((x: TechData) => x.tecnologia === label)
+          const entry = (data[date]?.[cat] ?? []).find((x: TechData) => x.tecnologia === label)
           return acc + Number(entry?.ofertas ?? 0)
         }, 0)
         row[label] = value
@@ -97,7 +109,7 @@ function App() {
 
       <FiltroCategoria
         category={category}
-        onChange={(c: Category) => setCategory(c)}
+        onChange={(c: string) => setCategory(c as Category)}
         options={["Todos","frontend", "backend", "lenguajes", "ecosistema"]}
       />
       <p className="mt-5">Información de los últimos 28 días</p>
