@@ -33,31 +33,27 @@ import {
 const formSchema = z.object({
   title: z
     .string()
-    .min(5, "Bug title must be at least 5 characters.")
-    .max(32, "Bug title must be at most 32 characters."),
+    .min(5, "El título debe tener al menos 5 caracteres.")
+    .max(32, "El título no puede superar los 32 caracteres."),
   description: z
     .string()
-    .min(20, "Description must be at least 20 characters.")
-    .max(100, "Description must be at most 100 characters."),
+    .min(20, "La descripción debe tener al menos 20 caracteres.")
+    .max(120, "La descripción no puede superar los 120 caracteres."),
 })
 
 export type BugFormValues = z.infer<typeof formSchema>
 
-export type Props = {
-  onSubmit?: (data: BugFormValues) => void
-  initialValues?: Partial<BugFormValues>
-  showToast?: boolean
-  className?: string
-  submitLabel?: string
-}
-
 export function Formulariosugerencia({
-  onSubmit,
   initialValues = { title: "", description: "" },
   showToast = true,
   className,
   submitLabel = "Enviar Sugerencia",
-}: Props) {
+}: {
+  initialValues?: Partial<BugFormValues>
+  showToast?: boolean
+  className?: string
+  submitLabel?: string
+}) {
   const form = useForm<BugFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,35 +62,40 @@ export function Formulariosugerencia({
     },
   })
 
-  function handleSubmit(data: BugFormValues) {
-    if (onSubmit) {
-      onSubmit(data)
-    }
+  async function handleSubmit(data: BugFormValues) {
+    try {
+      const formUrl =
+        "https://docs.google.com/forms/d/e/1FAIpQLScUBWx5mivpNhYPla7a0_fWTPSyR6I0BgUmtoalqnCHtadyzQ/formResponse"
 
-    if (showToast) {
-      toast("You submitted the following values:", {
-        description: (
-          <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
-            <code>{JSON.stringify(data, null, 2)}</code>
-          </pre>
-        ),
-        position: "bottom-right",
-        classNames: {
-          content: "flex flex-col gap-2",
-        },
-        style: {
-          "--border-radius": "calc(var(--radius)  + 4px)",
-        } as React.CSSProperties,
+      const formData = new FormData()
+      // titulo
+      formData.append("entry.1875965932", data.title)
+      // descripcion
+      formData.append("entry.1467397438", data.description)
+
+      await fetch(formUrl, {
+        method: "POST",
+        mode: "no-cors",
+        body: formData,
       })
+
+      form.reset()
+
+      if (showToast) {
+        toast.success("✅ Sugerencia enviada correctamente")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("❌ Error al enviar la sugerencia")
     }
   }
 
   return (
     <Card className={`w-full h-full ${className ?? ""}`}>
       <CardHeader>
-        <CardTitle>Bug Report</CardTitle>
+        <CardTitle>Enviar sugerencia</CardTitle>
         <CardDescription>
-          Help us improve by reporting bugs you encounter.
+          Ayúdame a mejorar sugiriendo más tecnologías o informando de bugs.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -106,18 +107,16 @@ export function Formulariosugerencia({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-rhf-demo-title">
-                    Bug Title
+                    Asunto
                   </FieldLabel>
                   <Input
                     {...field}
                     id="form-rhf-demo-title"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Login button not working on mobile"
+                    placeholder="Ej. Botón de filtro no funciona"
                     autoComplete="off"
                   />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
@@ -127,30 +126,28 @@ export function Formulariosugerencia({
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="form-rhf-demo-description">
-                    Description
+                    Descripción
                   </FieldLabel>
                   <InputGroup>
                     <InputGroupTextarea
                       {...field}
                       id="form-rhf-demo-description"
-                      placeholder="I'm having an issue with the login button on mobile."
+                      placeholder="Describe el error y cómo reproducirlo."
                       rows={6}
                       className="min-h-24 resize-none"
                       aria-invalid={fieldState.invalid}
                     />
                     <InputGroupAddon align="block-end">
                       <InputGroupText className="tabular-nums">
-                        {field.value.length}/100 characters
+                        {field.value.length}/100 caracteres
                       </InputGroupText>
                     </InputGroupAddon>
                   </InputGroup>
                   <FieldDescription>
-                    Include steps to reproduce, expected behavior, and what
-                    actually happened.
+                    Sé lo más específico posible para poder solucionar el
+                    problema o por qué se debería añadir una nueva tecnología.
                   </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />
@@ -159,7 +156,7 @@ export function Formulariosugerencia({
       </CardContent>
       <CardFooter>
         <Field orientation="horizontal">
-          <Button type="submit" variant={"outline"} form="form-rhf-demo">
+          <Button type="submit" variant="outline" form="form-rhf-demo">
             {submitLabel}
           </Button>
         </Field>
